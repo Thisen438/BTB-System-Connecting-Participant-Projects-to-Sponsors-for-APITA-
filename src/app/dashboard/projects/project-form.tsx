@@ -6,17 +6,10 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PROJECT_IMAGES_BUCKET, projectImageUrl } from "@/lib/images";
-import { createClient } from "@/lib/supabase/client";
+import { projectImageUrl } from "@/lib/images";
+import { IMAGE_ACCEPT, uploadImage } from "@/lib/upload-image";
 import { MAX_PROJECT_IMAGES, MAX_PROJECT_TAGS } from "@/lib/validation";
 import { saveProject } from "./actions";
-
-const extensions: Record<string, string> = {
-  "image/jpeg": "jpg",
-  "image/png": "png",
-  "image/webp": "webp",
-};
-const MAX_BYTES = 5 * 1024 * 1024; // same limit as the storage bucket
 
 const field = "h-11 rounded-xl px-3.5";
 const textarea =
@@ -27,7 +20,6 @@ export type ProjectFormValues = {
   title: string;
   summary: string;
   description: string;
-  team: string;
   imagePaths: string[];
   status: "draft" | "published";
   tagIds: number[];
@@ -54,19 +46,10 @@ export function ProjectForm({
     if (files.length > room)
       setError(`You can add up to ${MAX_PROJECT_IMAGES} images.`);
     setUploading(true);
-    const supabase = createClient();
     for (const file of files.slice(0, room)) {
-      const ext = extensions[file.type];
-      if (!ext || file.size > MAX_BYTES) {
-        setError(`${file.name}: use a JPG, PNG or WebP image up to 5 MB.`);
-        continue;
-      }
-      const path = `${userId}/${crypto.randomUUID()}.${ext}`;
-      const { error: failed } = await supabase.storage
-        .from(PROJECT_IMAGES_BUCKET)
-        .upload(path, file);
-      if (failed) setError(`${file.name}: upload failed. Try again.`);
-      else setImagePaths((paths) => [...paths, path]);
+      const result = await uploadImage(userId, file);
+      if ("error" in result) setError(result.error);
+      else setImagePaths((paths) => [...paths, result.path]);
     }
     setUploading(false);
   }
@@ -216,7 +199,7 @@ export function ProjectForm({
                 {uploading ? "Uploading…" : "Add images"}
                 <input
                   type="file"
-                  accept={Object.keys(extensions).join(",")}
+                  accept={IMAGE_ACCEPT}
                   multiple
                   disabled={uploading}
                   onChange={(e) => {
@@ -233,19 +216,6 @@ export function ProjectForm({
         <p className="text-sm text-muted-foreground">
           JPG, PNG or WebP, up to 5 MB each. The first image is the cover.
         </p>
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="team">Team</Label>
-        <textarea
-          id="team"
-          name="team"
-          rows={3}
-          maxLength={500}
-          defaultValue={project?.team}
-          placeholder="Names and roles, one per line."
-          className={textarea}
-        />
       </div>
 
       {error && (

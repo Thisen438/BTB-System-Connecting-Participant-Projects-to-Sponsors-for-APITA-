@@ -1,5 +1,5 @@
 import { desc, eq, sql } from "drizzle-orm";
-import { Plus, Rocket } from "lucide-react";
+import { ImageIcon, Plus, Rocket } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -8,8 +8,8 @@ import { projects, projectTags, tags } from "@/db/schema";
 import { projectImageUrl } from "@/lib/images";
 import { setProjectStatus } from "./projects/actions";
 
-export async function MyProjects({ ownerId }: { ownerId: string }) {
-  const mine = await db
+export const getMyProjects = (ownerId: string) =>
+  db
     .select({
       id: projects.id,
       title: projects.title,
@@ -27,6 +27,11 @@ export async function MyProjects({ ownerId }: { ownerId: string }) {
     .groupBy(projects.id)
     .orderBy(desc(projects.updatedAt));
 
+export function MyProjects({
+  mine,
+}: {
+  mine: Awaited<ReturnType<typeof getMyProjects>>;
+}) {
   const newProject = (
     <Link
       href="/dashboard/projects/new"
@@ -51,41 +56,50 @@ export async function MyProjects({ ownerId }: { ownerId: string }) {
       </section>
     );
 
+  // Most teams have one project, so a single project gets a wide card with a large cover.
+  const single = mine.length === 1;
+
   return (
     <section className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-4">
-        <h2 className="text-lg font-semibold">My projects</h2>
+        <h2 className="text-lg font-semibold">
+          {single ? "Your project" : "Your projects"}
+        </h2>
         {newProject}
       </div>
-      <ul className="flex flex-col gap-3">
+      <ul className={`grid gap-4 ${single ? "" : "md:grid-cols-2"}`}>
         {mine.map((p) => {
           const published = p.status === "published";
           return (
             <li
               key={p.id}
-              className="surface flex flex-col gap-4 p-4 sm:flex-row sm:items-center"
+              className={`surface flex flex-col overflow-hidden ${single ? "md:flex-row" : ""}`}
             >
-              <div className="relative aspect-video w-full shrink-0 overflow-hidden rounded-xl bg-muted sm:w-40">
-                {p.cover && (
+              <div
+                className={`relative flex aspect-video shrink-0 items-center justify-center bg-muted text-muted-foreground ${single ? "md:w-1/2" : ""}`}
+              >
+                {p.cover ? (
                   <Image
                     src={projectImageUrl(p.cover)}
                     alt=""
                     fill
-                    sizes="(min-width: 640px) 160px, 100vw"
+                    sizes="(min-width: 768px) 560px, 100vw"
                     className="object-cover"
                   />
+                ) : (
+                  <ImageIcon aria-hidden className="size-8 opacity-50" />
                 )}
               </div>
-              <div className="flex min-w-0 flex-1 flex-col gap-2">
+              <div className="flex min-w-0 flex-1 flex-col gap-3 p-5 sm:p-6">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="truncate font-semibold">{p.title}</h3>
+                  <h3 className="truncate text-lg font-semibold">{p.title}</h3>
                   <span
                     className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${published ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
                   >
                     {published ? "Published" : "Draft"}
                   </span>
                 </div>
-                <p className="line-clamp-2 text-sm text-muted-foreground">
+                <p className="line-clamp-3 text-sm text-muted-foreground">
                   {p.summary}
                 </p>
                 <ul className="flex flex-wrap gap-1.5">
@@ -98,31 +112,39 @@ export async function MyProjects({ ownerId }: { ownerId: string }) {
                     </li>
                   ))}
                 </ul>
-              </div>
-              <div className="flex shrink-0 gap-2">
-                <Link
-                  href={`/dashboard/projects/${p.id}/edit`}
-                  aria-label={`Edit ${p.title}`}
-                  className={buttonVariants({ variant: "outline", size: "lg" })}
-                >
-                  Edit
-                </Link>
-                <form
-                  action={setProjectStatus.bind(
-                    null,
-                    p.id,
-                    published ? "draft" : "published",
-                  )}
-                >
-                  <Button
-                    type="submit"
-                    variant={published ? "ghost" : "default"}
-                    size="lg"
-                    aria-label={`${published ? "Unpublish" : "Publish"} ${p.title}`}
+                <p className="text-sm text-muted-foreground">
+                  {published
+                    ? "Live: investors can find this project."
+                    : "Draft: only you can see this project."}
+                </p>
+                <div className="mt-auto flex gap-2 pt-2">
+                  <Link
+                    href={`/dashboard/projects/${p.id}/edit`}
+                    aria-label={`Edit ${p.title}`}
+                    className={buttonVariants({
+                      variant: "outline",
+                      size: "lg",
+                    })}
                   >
-                    {published ? "Unpublish" : "Publish"}
-                  </Button>
-                </form>
+                    Edit
+                  </Link>
+                  <form
+                    action={setProjectStatus.bind(
+                      null,
+                      p.id,
+                      published ? "draft" : "published",
+                    )}
+                  >
+                    <Button
+                      type="submit"
+                      variant={published ? "ghost" : "default"}
+                      size="lg"
+                      aria-label={`${published ? "Unpublish" : "Publish"} ${p.title}`}
+                    >
+                      {published ? "Unpublish" : "Publish"}
+                    </Button>
+                  </form>
+                </div>
               </div>
             </li>
           );

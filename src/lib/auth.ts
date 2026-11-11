@@ -1,5 +1,6 @@
 import "server-only";
 import { eq } from "drizzle-orm";
+import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { cache } from "react";
 import { db } from "@/db";
@@ -25,3 +26,10 @@ export const getProfile = cache(async () => {
     .where(eq(profiles.id, user.id));
   return profile ?? null;
 });
+
+// For pages and actions only participants may use; everyone else goes back to the dashboard.
+export async function requireParticipant() {
+  const profile = await getProfile();
+  if (profile?.role !== "participant") redirect("/dashboard");
+  return profile;
+}

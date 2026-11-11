@@ -28,6 +28,8 @@ export const profiles = pgTable("profiles", {
     .references(() => authUsers.id, { onDelete: "cascade" }),
   role: userRole("role").notNull(),
   displayName: text("display_name").notNull(),
+  // Participants only: the name shown on the team profile and on member badges.
+  teamName: text("team_name").notNull().default(""),
   createdAt,
 }).enableRLS();
 
@@ -59,8 +61,6 @@ export const projects = pgTable(
     title: text("title").notNull(),
     summary: text("summary").notNull(),
     description: text("description").notNull().default(""),
-    // Free text (names and roles). One account owns a project; team accounts are an open decision in PLAN.md.
-    team: text("team").notNull().default(""),
     imagePaths: text("image_paths").array().notNull().default([]),
     status: projectStatus("status").notNull().default("draft"),
     createdAt,
@@ -70,6 +70,25 @@ export const projects = pgTable(
       .$onUpdate(() => new Date()),
   },
   (t) => [index("projects_owner_idx").on(t.ownerId)],
+).enableRLS();
+
+// The people behind a participant account. The team lead fills these in; members do not sign in.
+export const teamMembers = pgTable(
+  "team_members",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    ownerId: uuid("owner_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    role: text("role").notNull(),
+    bio: text("bio").notNull().default(""),
+    // Path in the project-images bucket, or "" for no photo.
+    imagePath: text("image_path").notNull().default(""),
+    linkUrl: text("link_url").notNull().default(""),
+    createdAt,
+  },
+  (t) => [index("team_members_owner_idx").on(t.ownerId)],
 ).enableRLS();
 
 export const projectTags = pgTable(

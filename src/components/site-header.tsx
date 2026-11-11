@@ -16,7 +16,11 @@ export function SiteHeader({ children }: { children?: React.ReactNode }) {
             A
           </span>
           <span>
-            APITA <span className="text-muted-foreground">Marketplace</span>
+            APITA{" "}
+            {/* Hidden on phones to leave room for the signed-in navigation. */}
+            <span className="hidden text-muted-foreground sm:inline">
+              Marketplace
+            </span>
           </span>
         </Link>
         <nav className="flex items-center gap-2">{children}</nav>

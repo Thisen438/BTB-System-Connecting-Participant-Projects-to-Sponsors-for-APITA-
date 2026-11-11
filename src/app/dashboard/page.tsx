@@ -1,13 +1,10 @@
 import { eq } from "drizzle-orm";
 import { Compass } from "lucide-react";
 import { redirect } from "next/navigation";
-import { SiteHeader } from "@/components/site-header";
-import { Button } from "@/components/ui/button";
 import { db } from "@/db";
 import { investorInterests, tags } from "@/db/schema";
 import { getProfile } from "@/lib/auth";
-import { signOut } from "./actions";
-import { MyProjects } from "./my-projects";
+import { ParticipantHome } from "./participant-home";
 
 export const metadata = { title: "Dashboard | APITA Marketplace" };
 
@@ -30,14 +27,6 @@ export default async function DashboardPage() {
 
   return (
     <>
-      <SiteHeader>
-        <form action={signOut}>
-          <Button variant="ghost" size="lg" type="submit">
-            Sign out
-          </Button>
-        </form>
-      </SiteHeader>
-
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-4 py-10 sm:px-6">
         <div className="flex flex-col gap-2">
           <p className="w-fit rounded-full bg-accent px-3 py-1 text-xs font-medium text-accent-foreground">
@@ -76,7 +65,7 @@ export default async function DashboardPage() {
             </p>
           </section>
         ) : (
-          <MyProjects ownerId={profile.id} />
+          <ParticipantHome profile={profile} />
         )}
       </main>
     </>
