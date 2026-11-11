@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { onboardingSchema, projectSchema } from "./validation.ts";
+import {
+  onboardingSchema,
+  projectSchema,
+  teamMemberSchema,
+} from "./validation.ts";
 
 const ok = (v: unknown) => onboardingSchema.safeParse(v).success;
 
@@ -19,7 +23,6 @@ test("project validation", () => {
     title: "Smart ERP",
     summary: "An ERP for small shops.",
     description: "",
-    team: "",
     tagIds: ["1"],
     imagePaths: [`${id}/${id}.png`],
     status: "published",
@@ -33,4 +36,29 @@ test("project validation", () => {
   assert(!ok({ ...base, imagePaths: ["../other/secret.png"] }));
   assert(!ok({ ...base, imagePaths: ["https://evil.example/x.png"] }));
   assert(!ok({ ...base, status: "deleted" }));
+});
+
+test("team member validation", () => {
+  const id = "0b9f6a0e-1111-4222-8333-444455556666";
+  const base = {
+    name: "Ada",
+    role: "Lead",
+    bio: "",
+    imagePath: "",
+    linkUrl: "",
+  };
+  const ok = (v: unknown) => teamMemberSchema.safeParse(v).success;
+  assert(ok(base));
+  assert(
+    ok({
+      ...base,
+      imagePath: `${id}/${id}.jpg`,
+      linkUrl: "https://linkedin.com/in/ada",
+    }),
+  );
+  assert(!ok({ ...base, name: "A" }));
+  assert(!ok({ ...base, role: "" }));
+  assert(!ok({ ...base, linkUrl: "javascript:alert(1)" }));
+  assert(!ok({ ...base, linkUrl: "linkedin.com/in/ada" }));
+  assert(!ok({ ...base, imagePath: "../x.png" }));
 });

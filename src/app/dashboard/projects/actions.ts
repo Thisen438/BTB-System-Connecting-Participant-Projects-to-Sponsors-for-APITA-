@@ -6,14 +6,8 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/db";
 import { projects, projectTags } from "@/db/schema";
-import { getProfile } from "@/lib/auth";
+import { requireParticipant } from "@/lib/auth";
 import { projectSchema } from "@/lib/validation";
-
-async function requireParticipant() {
-  const profile = await getProfile();
-  if (profile?.role !== "participant") redirect("/dashboard");
-  return profile;
-}
 
 // Forms send a line break as two characters (\r\n) but the browser's maxLength counts it as one;
 // without this a long text with line breaks passes in the browser and fails the length check here.
@@ -31,7 +25,6 @@ export async function saveProject(
     title: formData.get("title"),
     summary: formData.get("summary"),
     description: unixNewlines(formData.get("description")),
-    team: unixNewlines(formData.get("team")),
     tagIds: formData.getAll("tagIds"),
     imagePaths: formData.getAll("imagePaths"),
     status: formData.get("status"),

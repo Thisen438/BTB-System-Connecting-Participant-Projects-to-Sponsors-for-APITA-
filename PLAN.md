@@ -26,7 +26,7 @@ Stack and requirements are in [CLAUDE.md](CLAUDE.md).
 - Create / edit / unpublish a project: title, summary, description, tags, images (Supabase Storage), team info.
 - "My projects" dashboard.
 - **Done when:** a participant can publish a project with tags and images.
-- **Status: done.** One account owns a project and team info is free text; tags come from the fixed seeded list (decisions 2 and 3 below).
+- **Status: done.** One account owns a project (team info moved to the team profile in Phase 2.5); tags come from the fixed seeded list (decisions 2 and 3 below).
 - Images upload from the browser to the public `project-images` bucket (JPG, PNG, WebP, 5 MB each, up to 5 per project).
 - Local testing: the sign-in page shows a password field in development only. Create test accounts in Supabase (Authentication → Users → Add user, "Auto Confirm User" ticked) to sign in without email.
 - Known gaps, left open on purpose:
@@ -35,9 +35,17 @@ Stack and requirements are in [CLAUDE.md](CLAUDE.md).
   - Removing an image from a project does not delete the file from storage.
   - No delete-project button.
 
+## Phase 2.5: Team profile + participant dashboard
+- Team profile page (`/dashboard/team`): team name, and up to 10 members with photo, name, role, short bio and one link. Only the team lead signs in; members are entries, not accounts. This replaces the free-text team field on a project.
+- Members are shown as hanging badges (`src/components/team-rail.tsx`, built on the third-party `ui/team-lanyard-rail.tsx`). Badge ribbon colours are the `--chart-1..5` values in `globals.css`.
+- Shared signed-in header (`src/app/dashboard/layout.tsx`) with Dashboard, Team and Sign out. Until the team has a member, a small pointer under "Team" says "Set up your team profile here".
+- Participant dashboard: a three-step "Get ready for APITA" checklist, a large card for the project, and the team badges.
+- **Status: done.**
+
 ## Phase 3: Investor browsing
 - Project catalog (cards), search by text, filter by tags.
 - Project detail page with **Schedule meeting** as the primary button.
+- Show the owner's team on the project detail page with `<TeamRail>` (same badges as the participant portal).
 - Record views/clicks into `project_views`.
 - **Done when:** an investor can find a project by tag and open its page.
 
