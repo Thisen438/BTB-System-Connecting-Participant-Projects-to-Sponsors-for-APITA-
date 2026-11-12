@@ -16,9 +16,9 @@ export default async function NewProjectPage() {
   const allTags = await db.select().from(tags).orderBy(tags.name);
 
   return (
-    <>
+    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-10 sm:px-6">
       <h1 className="text-3xl font-semibold tracking-tight">New project</h1>
       <ProjectForm userId={profile.id} tags={allTags} />
-    </>
+    </main>
   );
 }

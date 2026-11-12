@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/db";
 import { projects, projectTags } from "@/db/schema";
-import { requireParticipant } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
 import { projectSchema } from "@/lib/validation";
 
 // Forms send a line break as two characters (\r\n) but the browser's maxLength counts it as one;
@@ -19,7 +19,7 @@ export async function saveProject(
   id: string | null,
   formData: FormData,
 ): Promise<string | null> {
-  const profile = await requireParticipant();
+  const profile = await requireRole("participant");
 
   const parsed = projectSchema.safeParse({
     title: formData.get("title"),
@@ -67,7 +67,7 @@ export async function setProjectStatus(
   id: string,
   status: "draft" | "published",
 ) {
-  const profile = await requireParticipant();
+  const profile = await requireRole("participant");
   if (
     !z.uuid().safeParse(id).success ||
     !z.enum(["draft", "published"]).safeParse(status).success

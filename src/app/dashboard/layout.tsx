@@ -6,7 +6,7 @@ import { db } from "@/db";
 import { teamMembers } from "@/db/schema";
 import { getProfile } from "@/lib/auth";
 import { signOut } from "./actions";
-import { TeamHint } from "./team-hint";
+import { NavHint } from "./nav-hint";
 
 const navLink = buttonVariants({ variant: "ghost", size: "lg" });
 
@@ -35,7 +35,26 @@ export default async function DashboardLayout({
             <Link href="/dashboard/team" className={navLink}>
               Team
             </Link>
-            {needsTeam && <TeamHint />}
+            {needsTeam && (
+              <NavHint hideOn="/dashboard/team">
+                Set up your team profile here
+              </NavHint>
+            )}
+          </span>
+        )}
+        {profile?.role === "investor" && (
+          <span className="relative">
+            <Link href="/dashboard/profile" className={navLink}>
+              {/* Shorter on phones so the three links fit. */}
+              <span className="sm:hidden">Profile</span>
+              <span className="max-sm:hidden">My profile</span>
+            </Link>
+            {/* Shown until the investor has filled in anything beyond their name. */}
+            {!(profile.organisation || profile.bio || profile.imagePath) && (
+              <NavHint hideOn="/dashboard/profile">
+                Complete your profile here
+              </NavHint>
+            )}
           </span>
         )}
         <form action={signOut}>

@@ -1,31 +1,10 @@
-import { desc, eq, sql } from "drizzle-orm";
 import { ImageIcon, Plus, Rocket } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { db } from "@/db";
-import { projects, projectTags, tags } from "@/db/schema";
 import { projectImageUrl } from "@/lib/images";
+import type { getMyProjects } from "@/lib/projects";
 import { setProjectStatus } from "./projects/actions";
-
-export const getMyProjects = (ownerId: string) =>
-  db
-    .select({
-      id: projects.id,
-      title: projects.title,
-      summary: projects.summary,
-      status: projects.status,
-      cover: sql<string | null>`${projects.imagePaths}[1]`,
-      tags: sql<
-        string[]
-      >`coalesce(array_agg(${tags.name} order by ${tags.name}) filter (where ${tags.name} is not null), '{}')`,
-    })
-    .from(projects)
-    .leftJoin(projectTags, eq(projectTags.projectId, projects.id))
-    .leftJoin(tags, eq(tags.id, projectTags.tagId))
-    .where(eq(projects.ownerId, ownerId))
-    .groupBy(projects.id)
-    .orderBy(desc(projects.updatedAt));
 
 export function MyProjects({
   mine,
@@ -117,7 +96,17 @@ export function MyProjects({
                     ? "Live: investors can find this project."
                     : "Draft: only you can see this project."}
                 </p>
-                <div className="mt-auto flex gap-2 pt-2">
+                <div className="mt-auto flex flex-wrap gap-2 pt-2">
+                  <Link
+                    href={`/dashboard/projects/${p.id}`}
+                    aria-label={`Preview ${p.title} as investors see it`}
+                    className={buttonVariants({
+                      variant: "outline",
+                      size: "lg",
+                    })}
+                  >
+                    Preview
+                  </Link>
                   <Link
                     href={`/dashboard/projects/${p.id}/edit`}
                     aria-label={`Edit ${p.title}`}

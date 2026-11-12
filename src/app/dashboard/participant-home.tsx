@@ -2,8 +2,9 @@ import { Check, Users } from "lucide-react";
 import Link from "next/link";
 import { TeamRail } from "@/components/team-rail";
 import { buttonVariants } from "@/components/ui/button";
+import { getMyProjects } from "@/lib/projects";
 import { getTeamMembers } from "@/lib/team";
-import { getMyProjects, MyProjects } from "./my-projects";
+import { MyProjects } from "./my-projects";
 
 // The participant's dashboard: what is left to do, their project, and their team.
 export async function ParticipantHome({

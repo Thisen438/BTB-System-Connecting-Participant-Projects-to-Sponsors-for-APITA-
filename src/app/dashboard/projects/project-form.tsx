@@ -3,6 +3,7 @@
 import { ImagePlus, X } from "lucide-react";
 import Image from "next/image";
 import { useState, useTransition } from "react";
+import { TagChips } from "@/components/tag-chips";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -140,23 +141,7 @@ export function ProjectForm({
         <legend className="mb-2 text-sm font-medium">
           Tags (1 to {MAX_PROJECT_TAGS})
         </legend>
-        <div className="flex flex-wrap gap-2">
-          {tags.map((t) => (
-            <label
-              key={t.id}
-              className="cursor-pointer rounded-full border px-3.5 py-1.5 text-sm transition-colors hover:bg-accent has-checked:border-primary has-checked:bg-primary has-checked:text-primary-foreground has-focus-visible:ring-3 has-focus-visible:ring-ring/50"
-            >
-              <input
-                type="checkbox"
-                name="tagIds"
-                value={t.id}
-                defaultChecked={project?.tagIds.includes(t.id)}
-                className="sr-only"
-              />
-              {t.name}
-            </label>
-          ))}
-        </div>
+        <TagChips tags={tags} checkedIds={project?.tagIds} />
       </fieldset>
 
       <div className="flex flex-col gap-2">

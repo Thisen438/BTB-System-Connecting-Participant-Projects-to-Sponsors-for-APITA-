@@ -1,16 +1,13 @@
 "use client";
 
-import { Camera } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { PhotoInput } from "@/components/photo-input";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { projectImageUrl } from "@/lib/images";
 import type { TeamMember } from "@/lib/team";
-import { IMAGE_ACCEPT, uploadImage } from "@/lib/upload-image";
 import { saveTeamMember } from "./actions";
 
 const field = "h-11 rounded-xl px-3.5";
@@ -25,17 +22,9 @@ export function MemberForm({
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [saving, startSaving] = useTransition();
-  const [imagePath, setImagePath] = useState(member?.imagePath ?? "");
   const [uploading, setUploading] = useState(false);
-
-  async function addPhoto(file: File) {
-    setError(null);
-    setUploading(true);
-    const result = await uploadImage(userId, file);
-    if ("error" in result) setError(result.error);
-    else setImagePath(result.path);
-    setUploading(false);
-  }
+  // Bumped after a save to clear the photo picker.
+  const [photoKey, setPhotoKey] = useState(0);
 
   return (
     <form
@@ -51,7 +40,7 @@ export function MemberForm({
           setError(failed);
           if (failed) return;
           form.reset();
-          setImagePath("");
+          setPhotoKey((k) => k + 1);
           if (member) router.push("/dashboard/team");
         });
       }}
@@ -64,43 +53,13 @@ export function MemberForm({
       </h2>
 
       <div className="flex flex-col gap-5 sm:flex-row">
-        <div className="flex shrink-0 flex-col items-center gap-2">
-          <input type="hidden" name="imagePath" value={imagePath} />
-          <label className="relative flex size-24 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-dashed bg-muted text-muted-foreground transition-colors hover:bg-accent has-focus-visible:ring-3 has-focus-visible:ring-ring/50">
-            {imagePath ? (
-              <Image
-                src={projectImageUrl(imagePath)}
-                alt=""
-                fill
-                sizes="96px"
-                className="object-cover"
-              />
-            ) : (
-              <Camera aria-hidden className="size-6" />
-            )}
-            <span className="sr-only">
-              {imagePath ? "Change photo" : "Add photo"}
-            </span>
-            <input
-              type="file"
-              accept={IMAGE_ACCEPT}
-              disabled={uploading}
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                e.target.value = "";
-                if (file) void addPhoto(file);
-              }}
-              className="sr-only"
-            />
-          </label>
-          <span className="text-xs text-muted-foreground">
-            {uploading
-              ? "Uploading…"
-              : imagePath
-                ? "Change photo"
-                : "Add photo"}
-          </span>
-        </div>
+        <PhotoInput
+          key={photoKey}
+          userId={userId}
+          defaultPath={member?.imagePath}
+          onUploading={setUploading}
+          onError={setError}
+        />
 
         <div className="grid flex-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-2">

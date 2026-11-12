@@ -42,12 +42,21 @@ Stack and requirements are in [CLAUDE.md](CLAUDE.md).
 - Participant dashboard: a three-step "Get ready for APITA" checklist, a large card for the project, and the team badges.
 - **Status: done.**
 
+## Phase 2.6: Investor profile
+- My profile page (`/dashboard/profile`): photo, name, title, organisation, short bio, one link, and interest tags (now editable after sign-up).
+- Shown as a plain profile card on the investor dashboard and on My profile. Badges are for teams only.
+- "My profile" link in the header, with a "Complete your profile here" pointer until a photo, bio or organisation is added.
+- **Status: done.**
+
 ## Phase 3: Investor browsing
 - Project catalog (cards), search by text, filter by tags.
 - Project detail page with **Schedule meeting** as the primary button.
 - Show the owner's team on the project detail page with `<TeamRail>` (same badges as the participant portal).
 - Record views/clicks into `project_views`.
 - **Done when:** an investor can find a project by tag and open its page.
+- **Status: done.** The catalog is the investor dashboard; search and tag filters live in the page address. The project page is `/dashboard/projects/<id>`; the owner can open it too as a preview (drafts included, only for the owner).
+- **Schedule meeting** is shown on the project page but switched off until Phase 5.
+- The catalog shows the newest 100 matches with no paging.
 
 ## Phase 4: Recommendations
 - Postgres scoring query: tag overlap with investor interests + weight from tags of projects they viewed/clicked, small recency boost.

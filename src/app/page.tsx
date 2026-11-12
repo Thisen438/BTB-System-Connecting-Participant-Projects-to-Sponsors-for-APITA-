@@ -55,7 +55,10 @@ export default function Home() {
   return (
     <>
       <SiteHeader>
-        <Link href="/login" className={buttonVariants({ variant: "ghost", size: "lg" })}>
+        <Link
+          href="/login"
+          className={buttonVariants({ variant: "ghost", size: "lg" })}
+        >
           Sign in
         </Link>
       </SiteHeader>
@@ -81,8 +84,8 @@ export default function Home() {
               className="max-w-xl text-lg text-pretty text-muted-foreground"
             >
               APITA Marketplace connects the teams building at APITA with the
-              investors looking for them. Browse by interest, then book a
-              1-to-1 meeting.
+              investors looking for them. Browse by interest, then book a 1-to-1
+              meeting.
             </motion.p>
             <motion.div
               {...fadeUp(0.15)}

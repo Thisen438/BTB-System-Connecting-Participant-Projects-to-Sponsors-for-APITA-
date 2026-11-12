@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  investorProfileSchema,
   onboardingSchema,
   projectSchema,
   teamMemberSchema,
@@ -61,4 +62,23 @@ test("team member validation", () => {
   assert(!ok({ ...base, linkUrl: "javascript:alert(1)" }));
   assert(!ok({ ...base, linkUrl: "linkedin.com/in/ada" }));
   assert(!ok({ ...base, imagePath: "../x.png" }));
+});
+
+test("investor profile validation", () => {
+  const base = {
+    displayName: "Ada",
+    title: "",
+    organisation: "",
+    bio: "",
+    imagePath: "",
+    linkUrl: "",
+    tagIds: ["2"],
+  };
+  const ok = (v: unknown) => investorProfileSchema.safeParse(v).success;
+  assert(ok(base));
+  assert(ok({ ...base, title: "Partner", organisation: "Nova Ventures" }));
+  assert(!ok({ ...base, displayName: "A" }));
+  assert(!ok({ ...base, tagIds: [] }));
+  assert(!ok({ ...base, linkUrl: "javascript:alert(1)" }));
+  assert(!ok({ ...base, bio: "x".repeat(101) }));
 });

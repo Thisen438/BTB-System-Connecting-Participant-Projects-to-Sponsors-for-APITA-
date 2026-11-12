@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { TeamRail } from "@/components/team-rail";
 import { buttonVariants } from "@/components/ui/button";
-import { requireParticipant } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
 import { projectImageUrl } from "@/lib/images";
 import { getTeamMembers } from "@/lib/team";
 import { MAX_TEAM_MEMBERS } from "@/lib/validation";
@@ -17,7 +17,7 @@ export const instant = false;
 export default async function TeamPage({
   searchParams,
 }: PageProps<"/dashboard/team">) {
-  const profile = await requireParticipant();
+  const profile = await requireRole("participant");
   const [members, { edit }] = await Promise.all([
     getTeamMembers(profile.id),
     searchParams,

@@ -3,10 +3,16 @@
 import { motion } from "motion/react";
 import { usePathname } from "next/navigation";
 
-// First-run pointer under the "Team" link in the header. Shown until the team has a member.
-export function TeamHint() {
-  // No need to point at the page the user is already on.
-  if (usePathname().startsWith("/dashboard/team")) return null;
+// First-run pointer under a header link ("set up your team profile here"). The layout decides when to show it.
+export function NavHint({
+  hideOn,
+  children,
+}: {
+  // The page the hint points at: no need to show it there.
+  hideOn: string;
+  children: React.ReactNode;
+}) {
+  if (usePathname().startsWith(hideOn)) return null;
 
   return (
     <motion.span
@@ -22,7 +28,7 @@ export function TeamHint() {
         aria-hidden
         className="absolute -top-1 left-1/2 size-2 -translate-x-1/2 rotate-45 bg-primary"
       />
-      Set up your team profile here
+      {children}
     </motion.span>
   );
 }

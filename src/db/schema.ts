@@ -30,6 +30,13 @@ export const profiles = pgTable("profiles", {
   displayName: text("display_name").notNull(),
   // Participants only: the name shown on the team profile and on member badges.
   teamName: text("team_name").notNull().default(""),
+  // Investors only: shown on their badge (My profile).
+  title: text("title").notNull().default(""),
+  organisation: text("organisation").notNull().default(""),
+  bio: text("bio").notNull().default(""),
+  // Path in the project-images bucket, or "" for no photo.
+  imagePath: text("image_path").notNull().default(""),
+  linkUrl: text("link_url").notNull().default(""),
   createdAt,
 }).enableRLS();
 

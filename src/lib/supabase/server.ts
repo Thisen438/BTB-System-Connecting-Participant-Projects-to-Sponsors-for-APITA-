@@ -1,6 +1,7 @@
 import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { PROJECT_IMAGES_BUCKET } from "@/lib/images";
 
 export async function createClient() {
   const cookieStore = await cookies();
@@ -22,4 +23,12 @@ export async function createClient() {
       },
     },
   );
+}
+
+// A person's photo must not stay online after they are removed or the photo is replaced.
+// Call it after the database change; a failed file delete is ignored rather than failing the save.
+export async function deleteStoredImage(path: string) {
+  if (!path) return;
+  const supabase = await createClient();
+  await supabase.storage.from(PROJECT_IMAGES_BUCKET).remove([path]);
 }
