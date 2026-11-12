@@ -27,9 +27,9 @@ export const getProfile = cache(async () => {
   return profile ?? null;
 });
 
-// For pages and actions only participants may use; everyone else goes back to the dashboard.
-export async function requireParticipant() {
+// For pages and actions only one role may use; everyone else goes back to the dashboard.
+export async function requireRole(role: "participant" | "investor") {
   const profile = await getProfile();
-  if (profile?.role !== "participant") redirect("/dashboard");
+  if (profile?.role !== role) redirect("/dashboard");
   return profile;
 }

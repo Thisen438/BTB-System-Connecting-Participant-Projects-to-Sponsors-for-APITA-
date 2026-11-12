@@ -19,13 +19,16 @@ const linkLabel = (url: string) =>
       ? "GitHub"
       : "Website";
 
-// The team shown as hanging badges. Used in the participant portal and, from Phase 3, on the project page investors see.
+// The team shown as hanging badges: in the participant portal and on the project page investors open.
 export function TeamRail({
   members,
   teamName,
   className,
 }: {
-  members: TeamMember[];
+  members: Pick<
+    TeamMember,
+    "id" | "name" | "role" | "bio" | "imagePath" | "linkUrl"
+  >[];
   teamName: string;
   className?: string;
 }) {

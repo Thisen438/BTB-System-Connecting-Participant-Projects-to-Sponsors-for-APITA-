@@ -62,8 +62,7 @@ export function LoginForm({ linkFailed }: { linkFailed: boolean }) {
       <div className="flex flex-col gap-1.5 text-center">
         <h1 className="text-2xl font-semibold tracking-tight">Welcome</h1>
         <p className="text-sm text-muted-foreground">
-          Sign in or create an account with just your email. No password
-          needed.
+          Sign in or create an account with just your email. No password needed.
         </p>
       </div>
 

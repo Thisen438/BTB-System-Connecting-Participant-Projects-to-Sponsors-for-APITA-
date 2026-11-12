@@ -3,6 +3,7 @@
 import { Rocket, TrendingUp } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useActionState, useState } from "react";
+import { TagChips } from "@/components/tag-chips";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -102,22 +103,8 @@ export function OnboardingForm({
             <legend className="mb-2 text-sm font-medium">
               What are you interested in? Pick at least one.
             </legend>
-            <div className="flex flex-wrap gap-2 p-1">
-              {tags.map((t) => (
-                <label
-                  key={t.id}
-                  className={`${choice} rounded-full px-3.5 py-1.5 text-sm has-checked:border-primary has-checked:bg-primary has-checked:text-primary-foreground`}
-                >
-                  <input
-                    type="checkbox"
-                    name="tagIds"
-                    value={t.id}
-                    className="sr-only"
-                  />
-                  {t.name}
-                </label>
-              ))}
-            </div>
+            {/* p-1 keeps the focus ring inside the clipped, animating fieldset. */}
+            <TagChips tags={tags} className="p-1" />
           </motion.fieldset>
         )}
       </AnimatePresence>

@@ -5,9 +5,8 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/db";
 import { profiles, teamMembers } from "@/db/schema";
-import { requireParticipant } from "@/lib/auth";
-import { PROJECT_IMAGES_BUCKET } from "@/lib/images";
-import { createClient } from "@/lib/supabase/server";
+import { requireRole } from "@/lib/auth";
+import { deleteStoredImage } from "@/lib/supabase/server";
 import {
   MAX_TEAM_MEMBERS,
   teamMemberSchema,
@@ -17,20 +16,12 @@ import {
 // The header's "set up your team" hint lives in the dashboard layout, so refresh the layout too.
 const refresh = () => revalidatePath("/dashboard", "layout");
 
-// A person's photo must not stay online after they are removed or the photo is replaced.
-// The database change has already happened, so a failed file delete is ignored rather than failing the save.
-async function deletePhoto(path: string) {
-  if (!path) return;
-  const supabase = await createClient();
-  await supabase.storage.from(PROJECT_IMAGES_BUCKET).remove([path]);
-}
-
 // Returns the message to show next to the button.
 export async function saveTeamName(
   _prev: string | null,
   formData: FormData,
 ): Promise<string> {
-  const profile = await requireParticipant();
+  const profile = await requireRole("participant");
   const parsed = teamNameSchema.safeParse(formData.get("teamName"));
   if (!parsed.success) return parsed.error.issues[0].message;
   await db
@@ -46,7 +37,7 @@ export async function saveTeamMember(
   id: string | null,
   formData: FormData,
 ): Promise<string | null> {
-  const profile = await requireParticipant();
+  const profile = await requireRole("participant");
 
   const parsed = teamMemberSchema.safeParse({
     name: formData.get("name"),
@@ -82,7 +73,8 @@ export async function saveTeamMember(
       .where(mine);
     if (!old) return "Team member not found.";
     await db.update(teamMembers).set(values).where(mine);
-    if (old.imagePath !== values.imagePath) await deletePhoto(old.imagePath);
+    if (old.imagePath !== values.imagePath)
+      await deleteStoredImage(old.imagePath);
   }
 
   refresh();
@@ -90,12 +82,12 @@ export async function saveTeamMember(
 }
 
 export async function removeTeamMember(id: string) {
-  const profile = await requireParticipant();
+  const profile = await requireRole("participant");
   if (!z.uuid().safeParse(id).success) return;
   const [removed] = await db
     .delete(teamMembers)
     .where(and(eq(teamMembers.id, id), eq(teamMembers.ownerId, profile.id)))
     .returning({ imagePath: teamMembers.imagePath });
-  if (removed) await deletePhoto(removed.imagePath);
+  if (removed) await deleteStoredImage(removed.imagePath);
   refresh();
 }

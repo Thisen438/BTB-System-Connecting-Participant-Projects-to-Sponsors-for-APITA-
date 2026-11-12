@@ -23,7 +23,7 @@ export function SiteHeader({ children }: { children?: React.ReactNode }) {
             </span>
           </span>
         </Link>
-        <nav className="flex items-center gap-2">{children}</nav>
+        <nav className="flex items-center gap-0.5 sm:gap-2">{children}</nav>
       </div>
     </header>
   );

@@ -1,13 +1,15 @@
 import { z } from "zod";
 
+const displayName = z
+  .string()
+  .trim()
+  .min(2, "Enter your name (at least 2 characters).")
+  .max(80, "Name is too long.");
+
 export const onboardingSchema = z
   .object({
     role: z.enum(["participant", "investor"]),
-    displayName: z
-      .string()
-      .trim()
-      .min(2, "Enter your name (at least 2 characters).")
-      .max(80, "Name is too long."),
+    displayName,
     tagIds: z.array(z.coerce.number().int().positive()).max(50),
   })
   .refine((v) => v.role !== "investor" || v.tagIds.length > 0, {
@@ -73,3 +75,16 @@ export const teamMemberSchema = z.object({
     .max(300, "Link is too long.")
     .regex(/^(https?:\/\/\S+)?$/i, "Link must start with https://"),
 });
+
+// An investor's own badge: same bio, photo and link rules as a team member.
+export const investorProfileSchema = teamMemberSchema
+  .pick({ bio: true, imagePath: true, linkUrl: true })
+  .extend({
+    displayName,
+    title: z.string().trim().max(60, "Title is too long."),
+    organisation: z.string().trim().max(60, "Organisation is too long."),
+    tagIds: z
+      .array(z.coerce.number().int().positive())
+      .min(1, "Pick at least one interest.")
+      .max(50),
+  });
