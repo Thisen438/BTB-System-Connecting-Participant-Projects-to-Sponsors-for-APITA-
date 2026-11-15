@@ -1,12 +1,13 @@
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { db } from "@/db";
-import { teamMembers } from "@/db/schema";
+import { notifications, teamMembers } from "@/db/schema";
 import { getProfile } from "@/lib/auth";
 import { signOut } from "./actions";
 import { NavHint } from "./nav-hint";
+import { NotificationBell } from "./notification-bell";
 
 const navLink = buttonVariants({ variant: "ghost", size: "lg" });
 
@@ -56,6 +57,18 @@ export default async function DashboardLayout({
               </NavHint>
             )}
           </span>
+        )}
+        {profile && (
+          <NotificationBell
+            userId={profile.id}
+            unread={await db.$count(
+              notifications,
+              and(
+                eq(notifications.userId, profile.id),
+                isNull(notifications.readAt),
+              ),
+            )}
+          />
         )}
         <form action={signOut}>
           <Button variant="ghost" size="lg" type="submit">

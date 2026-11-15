@@ -55,7 +55,10 @@ export default async function DashboardPage({
               </Link>
             }
           />
-          <BrowseProjects searchParams={await searchParams} />
+          <BrowseProjects
+            investorId={profile.id}
+            searchParams={await searchParams}
+          />
         </>
       ) : (
         <ParticipantHome profile={profile} />

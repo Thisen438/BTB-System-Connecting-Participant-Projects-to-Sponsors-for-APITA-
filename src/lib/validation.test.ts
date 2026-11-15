@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   investorProfileSchema,
+  meetingReplySchema,
+  meetingRequestSchema,
   onboardingSchema,
   projectSchema,
   teamMemberSchema,
@@ -81,4 +83,30 @@ test("investor profile validation", () => {
   assert(!ok({ ...base, tagIds: [] }));
   assert(!ok({ ...base, linkUrl: "javascript:alert(1)" }));
   assert(!ok({ ...base, bio: "x".repeat(101) }));
+});
+
+test("meeting validation", () => {
+  const soon = new Date(Date.now() + 86_400_000).toISOString();
+  const past = new Date(Date.now() - 86_400_000).toISOString();
+  const request = { mode: "online", slots: [soon], note: "" };
+  const ok = (v: unknown) => meetingRequestSchema.safeParse(v).success;
+  assert(ok(request));
+  assert(ok({ ...request, mode: "in_person", slots: [soon, soon, soon] }));
+  assert(!ok({ ...request, slots: [] }));
+  assert(!ok({ ...request, slots: [soon, soon, soon, soon] }));
+  assert(!ok({ ...request, slots: [past] }));
+  assert(!ok({ ...request, slots: ["2026-12-05T10:00"] }));
+  assert(!ok({ ...request, mode: "phone" }));
+
+  const reply = (v: unknown) => meetingReplySchema.safeParse(v).success;
+  assert(reply({ reply: "accept", slot: soon, meetingLink: "" }));
+  assert(reply({ reply: "decline" }));
+  assert(
+    reply({ reply: "propose", slots: [soon], meetingLink: "https://meet.x/a" }),
+  );
+  assert(!reply({ reply: "propose", slots: [], meetingLink: "" }));
+  assert(
+    !reply({ reply: "accept", slot: soon, meetingLink: "javascript:alert(1)" }),
+  );
+  assert(!reply({ reply: "cancel" }));
 });

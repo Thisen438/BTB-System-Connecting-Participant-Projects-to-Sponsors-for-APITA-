@@ -25,20 +25,41 @@ const filtersSchema = z.object({
 
 // The project catalog investors browse.
 export async function BrowseProjects({
+  investorId,
   searchParams,
 }: {
+  investorId: string;
   searchParams: Record<string, string | string[] | undefined>;
 }) {
   const { q, tagIds } = filtersSchema.parse(searchParams);
   const [allTags, found] = await Promise.all([
     db.select().from(tags).orderBy(tags.name),
-    getPublishedProjects(q, tagIds),
+    getPublishedProjects(q, tagIds, investorId),
   ]);
   const filtered = q !== "" || tagIds.length > 0;
+  // The list is already best-fit first; the top row repeats only projects that match this investor's tags.
+  const recommended = filtered
+    ? []
+    : found.filter((p) => p.affinity > 0).slice(0, 3);
 
   return (
     <section className="flex flex-col gap-4">
-      <h2 className="text-lg font-semibold">Projects</h2>
+      {recommended.length > 0 && (
+        <>
+          <h2 className="text-lg font-semibold">Recommended for you</h2>
+          <ul className="mb-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {recommended.map((p) => (
+              <li key={p.id}>
+                <ProjectCard p={p} />
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+
+      <h2 className="text-lg font-semibold">
+        {recommended.length > 0 ? "All projects" : "Projects"}
+      </h2>
 
       <Form
         // A new key per search resets the fields, so "Clear filters" really clears them.
@@ -103,51 +124,61 @@ export async function BrowseProjects({
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {found.map((p) => (
             <li key={p.id}>
-              <Link
-                href={`/dashboard/projects/${p.id}`}
-                // Opening a project is recorded as a view, so it must not be loaded ahead of a real click.
-                prefetch={false}
-                className="surface flex h-full flex-col overflow-hidden transition-shadow outline-none hover:shadow-2xl hover:shadow-primary/10 focus-visible:ring-3 focus-visible:ring-ring/50"
-              >
-                <div className="relative flex aspect-video items-center justify-center bg-muted text-muted-foreground">
-                  {p.cover ? (
-                    <Image
-                      src={projectImageUrl(p.cover)}
-                      alt=""
-                      fill
-                      sizes="(min-width: 1024px) 380px, (min-width: 640px) 50vw, 100vw"
-                      className="object-cover"
-                    />
-                  ) : (
-                    <ImageIcon aria-hidden className="size-8 opacity-50" />
-                  )}
-                </div>
-                <div className="flex flex-1 flex-col gap-2 p-5">
-                  <h3 className="truncate text-lg font-semibold">{p.title}</h3>
-                  {p.teamName && (
-                    <p className="truncate text-sm font-medium text-accent-foreground">
-                      {p.teamName}
-                    </p>
-                  )}
-                  <p className="line-clamp-3 text-sm text-muted-foreground">
-                    {p.summary}
-                  </p>
-                  <ul className="mt-auto flex flex-wrap gap-1.5 pt-2">
-                    {p.tags.map((t) => (
-                      <li
-                        key={t}
-                        className="rounded-full bg-accent px-2.5 py-0.5 text-xs font-medium text-accent-foreground"
-                      >
-                        {t}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </Link>
+              <ProjectCard p={p} />
             </li>
           ))}
         </ul>
       )}
     </section>
+  );
+}
+
+function ProjectCard({
+  p,
+}: {
+  p: Awaited<ReturnType<typeof getPublishedProjects>>[number];
+}) {
+  return (
+    <Link
+      href={`/dashboard/projects/${p.id}`}
+      // Opening a project is recorded as a view, so it must not be loaded ahead of a real click.
+      prefetch={false}
+      className="surface flex h-full flex-col overflow-hidden transition-shadow outline-none hover:shadow-2xl hover:shadow-primary/10 focus-visible:ring-3 focus-visible:ring-ring/50"
+    >
+      <div className="relative flex aspect-video items-center justify-center bg-muted text-muted-foreground">
+        {p.cover ? (
+          <Image
+            src={projectImageUrl(p.cover)}
+            alt=""
+            fill
+            sizes="(min-width: 1024px) 380px, (min-width: 640px) 50vw, 100vw"
+            className="object-cover"
+          />
+        ) : (
+          <ImageIcon aria-hidden className="size-8 opacity-50" />
+        )}
+      </div>
+      <div className="flex flex-1 flex-col gap-2 p-5">
+        <h3 className="truncate text-lg font-semibold">{p.title}</h3>
+        {p.teamName && (
+          <p className="truncate text-sm font-medium text-accent-foreground">
+            {p.teamName}
+          </p>
+        )}
+        <p className="line-clamp-3 text-sm text-muted-foreground">
+          {p.summary}
+        </p>
+        <ul className="mt-auto flex flex-wrap gap-1.5 pt-2">
+          {p.tags.map((t) => (
+            <li
+              key={t}
+              className="rounded-full bg-accent px-2.5 py-0.5 text-xs font-medium text-accent-foreground"
+            >
+              {t}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </Link>
   );
 }

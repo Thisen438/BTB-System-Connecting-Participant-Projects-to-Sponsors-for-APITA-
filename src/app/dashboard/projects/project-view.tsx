@@ -2,20 +2,23 @@ import { ArrowLeft } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { TeamRail } from "@/components/team-rail";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { projectImageUrl } from "@/lib/images";
 import type { getProject } from "@/lib/projects";
 import type { TeamMember } from "@/lib/team";
+import { RequestMeeting } from "../meetings/meeting-forms";
 
 // What an investor sees after clicking a project. The owner sees the same page as a preview.
 export function ProjectView({
   project,
   members,
   isOwner,
+  meeting,
 }: {
   project: NonNullable<Awaited<ReturnType<typeof getProject>>>;
   members: TeamMember[];
   isOwner: boolean;
+  meeting: "available" | "requested" | "unavailable";
 }) {
   const [cover, ...moreImages] = project.imagePaths;
 
@@ -69,16 +72,17 @@ export function ProjectView({
           >
             Edit project
           </Link>
+        ) : meeting === "available" ? (
+          <RequestMeeting projectId={project.id} />
         ) : (
-          // The meeting flow is Phase 5 (see PLAN.md); until then the main action is shown but switched off.
-          <div className="flex shrink-0 flex-col items-stretch gap-1.5 sm:items-end">
-            <Button size="xl" disabled aria-describedby="meeting-note">
-              Schedule meeting
-            </Button>
-            <p id="meeting-note" className="text-xs text-muted-foreground">
-              Meeting requests open soon.
-            </p>
-          </div>
+          meeting === "requested" && (
+            <Link
+              href="/dashboard/meetings"
+              className={buttonVariants({ variant: "outline", size: "xl" })}
+            >
+              Meeting requested: view
+            </Link>
+          )
         )}
       </div>
 

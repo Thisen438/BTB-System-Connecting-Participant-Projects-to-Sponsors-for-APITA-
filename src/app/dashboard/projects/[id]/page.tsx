@@ -1,7 +1,8 @@
+import { and, eq, ne } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/db";
-import { projectViews } from "@/db/schema";
+import { meetings, projectViews } from "@/db/schema";
 import { getProfile } from "@/lib/auth";
 import { getProject } from "@/lib/projects";
 import { getTeamMembers } from "@/lib/team";
@@ -26,10 +27,24 @@ export default async function ProjectPage({
   // Drafts are private: only the owner may open one.
   if (!project || (project.status !== "published" && !isOwner)) notFound();
 
-  const [members] = await Promise.all([
+  const isInvestor = profile.role === "investor";
+  const [members, [openMeeting]] = await Promise.all([
     getTeamMembers(project.ownerId),
-    // Each visit by an investor is recorded; Phase 4 uses these for recommendations.
-    profile.role === "investor" &&
+    // The investor's live request for this project, if any (a declined one does not count).
+    isInvestor
+      ? db
+          .select({ status: meetings.status })
+          .from(meetings)
+          .where(
+            and(
+              eq(meetings.projectId, project.id),
+              eq(meetings.investorId, profile.id),
+              ne(meetings.status, "declined"),
+            ),
+          )
+      : [],
+    // Each visit by an investor is recorded and feeds their recommendations.
+    isInvestor &&
       db
         .insert(projectViews)
         .values({ investorId: profile.id, projectId: project.id }),
@@ -37,7 +52,15 @@ export default async function ProjectPage({
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 py-10 sm:px-6">
-      <ProjectView project={project} members={members} isOwner={isOwner} />
+      <ProjectView
+        project={project}
+        members={members}
+        isOwner={isOwner}
+        // Only investors can ask for a meeting; "requested" once they have a live request.
+        meeting={
+          !isInvestor ? "unavailable" : openMeeting ? "requested" : "available"
+        }
+      />
     </main>
   );
 }
