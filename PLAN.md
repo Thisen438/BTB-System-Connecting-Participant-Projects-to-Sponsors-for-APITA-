@@ -55,19 +55,29 @@ Stack and requirements are in [CLAUDE.md](CLAUDE.md).
 - Record views/clicks into `project_views`.
 - **Done when:** an investor can find a project by tag and open its page.
 - **Status: done.** The catalog is the investor dashboard; search and tag filters live in the page address. The project page is `/dashboard/projects/<id>`; the owner can open it too as a preview (drafts included, only for the owner).
-- **Schedule meeting** is shown on the project page but switched off until Phase 5.
-- The catalog shows the newest 100 matches with no paging.
+- The catalog shows the best 100 matches with no paging.
 
 ## Phase 4: Recommendations
 - Postgres scoring query: tag overlap with investor interests + weight from tags of projects they viewed/clicked, small recency boost.
 - "Recommended for you" row on the catalog; default sort for investors.
 - **Done when:** two investors with different interests see different ordering.
+- **Status: done.** Score per project (`src/lib/projects.ts`): for each of its tags, 3 points if the tag is one of the investor's interests, plus 1 point per project the investor opened with that tag (at most 3 per tag); a fresh listing gets up to 1 extra point, fading over two weeks. The catalog is always sorted by this score, and the top 3 matching projects are repeated in a "Recommended for you" row when no search is active.
 
 ## Phase 5: Meetings + in-app notifications
 - Meeting request flow (see decision below), stored as `meetings` with status + proposed slots.
 - Participant accepts / declines / proposes another slot.
 - Notifications: inbox page + live toast via Supabase Realtime, unread badge.
 - **Done when:** investor requests, owner gets a live pop-up, accepts, investor is notified.
+- **Status: built; the live pop-up still needs a two-account test in the browser.**
+- Flow (decision 1): the investor picks in person or online, proposes up to 3 times and adds a note. The team accepts one time, declines, or proposes other times; then it is the investor's turn, and so on. For an online meeting the team must add the link when accepting or proposing.
+- One live request per investor and project; after a decline the investor can ask again.
+- Meetings page (`/dashboard/meetings`) for both roles: meeting cards with the answer form, and an Updates list. Opening it clears the unread badge on the "Meetings" header link.
+- Times are stored in UTC and shown in each viewer's own time zone.
+- `notifications` is the only table the browser reads directly: it has a "read your own rows" rule and is in the Supabase Realtime feed (migration `0005`).
+- Known gaps, left open on purpose:
+  - An accepted meeting cannot be cancelled or moved.
+  - No check for two meetings at the same time.
+  - Only the account that owns the project is notified (decision 2).
 
 ## Phase 6: Polish + launch
 - Motion refinement (page transitions, list/card entrances). Reduced-motion support is already on app-wide.
@@ -85,7 +95,7 @@ Stack and requirements are in [CLAUDE.md](CLAUDE.md).
 - Admin view for event organisers.
 
 ## Decisions needed
-1. **Meeting flow** (blocks Phase 5): investor proposes 2-3 time slots and owner picks one? Or owners publish availability during the event and investors book a slot? Physical (at the venue) or online?
+1. **Meeting flow:** decided in Phase 5: the investor proposes up to 3 times and the team picks one, declines or proposes others. In person or online, chosen by the investor.
 2. **Who owns a project:** decided for now in Phase 2: one participant account. Revisit in Phase 5 if several team members must be notified.
 3. **Tag list:** decided for now in Phase 2: fixed list we seed (ERP, AI Integration, Chat Bot, ...). Participants cannot add tags.
 4. **Admin/organiser role** needed before the event?

@@ -88,3 +88,38 @@ export const investorProfileSchema = teamMemberSchema
       .min(1, "Pick at least one interest.")
       .max(50),
   });
+
+export const MAX_MEETING_SLOTS = 3;
+
+// Times arrive as UTC ISO strings: the browser converts the user's local time before sending.
+const meetingSlots = z
+  .array(z.iso.datetime("Invalid time."))
+  .min(1, "Propose at least one time.")
+  .max(MAX_MEETING_SLOTS, `Propose at most ${MAX_MEETING_SLOTS} times.`)
+  .refine((slots) => slots.every((s) => Date.parse(s) > Date.now()), {
+    message: "Times must be in the future.",
+  });
+
+// Shown as a clickable link, so only web addresses: never javascript: or data: links.
+const meetingLink = z
+  .string()
+  .trim()
+  .max(300, "Link is too long.")
+  .regex(/^(https?:\/\/\S+)?$/i, "Link must start with https://");
+
+export const meetingRequestSchema = z.object({
+  mode: z.enum(["in_person", "online"], "Choose in person or online."),
+  slots: meetingSlots,
+  note: z.string().trim().max(500, "Note is too long."),
+});
+
+// The answer to a pending request: take one of the proposed times, say no, or suggest other times.
+export const meetingReplySchema = z.discriminatedUnion("reply", [
+  z.object({
+    reply: z.literal("accept"),
+    slot: z.iso.datetime("Pick one of the times."),
+    meetingLink,
+  }),
+  z.object({ reply: z.literal("decline") }),
+  z.object({ reply: z.literal("propose"), slots: meetingSlots, meetingLink }),
+]);

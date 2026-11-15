@@ -38,12 +38,41 @@ export const getMyProjects = (ownerId: string) =>
     .groupBy(projects.id)
     .orderBy(desc(projects.updatedAt));
 
-// The catalog investors browse: published projects, optionally matching a text and any of the given tags.
-export function getPublishedProjects(q: string, tagIds: number[]) {
+// How well a project fits one investor: per project tag, 3 if it is one of their interests,
+// plus 1 for each project they opened carrying that tag (at most 3 per tag).
+const affinityFor = (investorId: string) =>
+  sql<number>`(
+    select coalesce(sum(
+      case when ii.tag_id is null then 0 else 3 end + least(coalesce(v.n, 0), 3)
+    ), 0)::int
+    from project_tags pt
+    left join investor_interests ii
+      on ii.tag_id = pt.tag_id and ii.investor_id = ${investorId}
+    left join (
+      select pt2.tag_id, count(distinct pv.project_id) as n
+      from project_views pv
+      join project_tags pt2 on pt2.project_id = pv.project_id
+      where pv.investor_id = ${investorId}
+      group by pt2.tag_id
+    ) v on v.tag_id = pt.tag_id
+    where pt.project_id = ${projects.id}
+  )`;
+
+// Small boost for fresh listings: 1 when just updated, fading to 0 over two weeks. It only breaks near-ties.
+const recency = sql`greatest(0, 1 - extract(epoch from now() - ${projects.updatedAt}) / 1209600)`;
+
+// The catalog one investor browses: published projects, optionally matching a text and any of the given tags,
+// best fit for that investor first.
+export function getPublishedProjects(
+  q: string,
+  tagIds: number[],
+  investorId: string,
+) {
   const pattern = `%${q}%`;
+  const affinity = affinityFor(investorId);
   return (
     db
-      .select({ ...card, teamName: profiles.teamName })
+      .select({ ...card, teamName: profiles.teamName, affinity })
       .from(projects)
       .innerJoin(profiles, eq(profiles.id, projects.ownerId))
       .leftJoin(projectTags, eq(projectTags.projectId, projects.id))
@@ -70,8 +99,8 @@ export function getPublishedProjects(q: string, tagIds: number[]) {
         ),
       )
       .groupBy(projects.id, profiles.teamName)
-      .orderBy(desc(projects.updatedAt))
-      // shortcut: no paging, the newest 100 matches are shown; add paging if the event lists more projects than that.
+      .orderBy(desc(sql`${affinity} + ${recency}`), desc(projects.updatedAt))
+      // shortcut: no paging, the best 100 matches are shown; add paging if the event lists more projects than that.
       .limit(100)
   );
 }
